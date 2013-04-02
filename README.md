@@ -1,12 +1,19 @@
 # Nas::Capistrano
 
-TODO: Write a gem description
+This is a small collection of capistrano recipes I've put together to
+make deploying to my servers a bit easier
+
+I have no intention of submitting to ruby-gems
+
+Feel free to pick and choose if you wish, but it's not a turnkey
+solution by any meants.  I doubt it'll be much use to others as-is.
+
 
 ## Installation
 
 Add this line to your application's Gemfile:
 
-    gem 'nas-capistrano'
+    gem 'nas-capistrano', :git=>https://github.com/nathanstitt/nas-capistrano.git
 
 And then execute:
 
