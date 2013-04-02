@@ -28,7 +28,10 @@ configuration.load do
             if ENV['FORCE_UPLOAD'] || capture("cd #{latest_release} && #{source.local.log(from)} public/app/ | wc -l").to_i > 0
                 output = run_locally("rake build:coffee")
                 Dir.chdir( 'public' ) do
-                    output = `sencha app build`
+                    Process.wait Kernel.fork do
+                        ENV['GEM_HOME'] = ENV['GEM_PATH'] = ENV['RUBYOPT'] = nil
+                        output = `sencha app build`
+                    end
                 end
                 if output =~ /BUILD FAILED/
                     raise Capistrano::Error, "Sencha compile failed:\n#{output}"
