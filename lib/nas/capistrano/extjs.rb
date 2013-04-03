@@ -28,13 +28,18 @@ configuration.load do
             if ENV['FORCE_UPLOAD'] || capture("cd #{latest_release} && #{source.local.log(from)} public/app/ | wc -l").to_i > 0
                 output = run_locally("rake build:coffee")
                 Dir.chdir( 'public' ) do
-                    Process.wait Kernel.fork do
-                        ENV['GEM_HOME'] = ENV['GEM_PATH'] = ENV['RUBYOPT'] = nil
-                        output = `sencha app build`
+                    start = Time.now
+                    logger.info "Starting ExtJS compilation"
+                    pid = Kernel.fork do
+                        %w{GEM_HOME GEM_PATH RUBYOPT}.each{ |var| ENV.delete(var) }
+                        output = `source $(rvm 1.9 do rvm env --path) && sencha app build`
+                        if output =~ /BUILD FAILED/ || 0 != $?.exitstatus
+                            raise Capistrano::Error, "Sencha compile failed:\n#{output}"
+                        end
                     end
-                end
-                if output =~ /BUILD FAILED/
-                    raise Capistrano::Error, "Sencha compile failed:\n#{output}"
+                    Process.waitpid(pid)
+                    abort("ExtJS Build failure") if 0 != $?.exitstatus
+                    logger.info "Finished ExtJS compilation (#{(Time.now-start).round(2)} seconds)"
                 end
             else
                 logger.info "Skipping ExtJS compilation because there were no changes in public/app. FORCE_UPLOAD=1 to force"
