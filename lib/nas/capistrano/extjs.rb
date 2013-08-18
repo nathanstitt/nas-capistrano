@@ -25,7 +25,7 @@ configuration.load do
         desc "build extjs classes"
         task :build do
             from = source.next_revision(current_revision)
-            if ENV['FORCE_UPLOAD'] || capture("cd #{latest_release} && #{source.local.log(from)} public/app/ | wc -l").to_i > 0
+            if ENV['FORCE_EXT_UPLOAD'] || capture("cd #{latest_release} && #{source.local.log(from)} public/app/ | wc -l").to_i > 0
                 output = run_locally("rake build:coffee")
                 Dir.chdir( 'public' ) do
                     start = Time.now
@@ -50,18 +50,19 @@ configuration.load do
         desc "upload extjs compiled & minimized source"
         task :upload do
             server = configuration.variables[:server]
-            dest = './public/build/App/production'
-            `rsync -avz -e ssh \"#{dest}/\" \"#{user}@#{server}:#{shared_path}/extjs/\" --exclude '*.html'`
             pub = "#{release_path}/public"
             run "rm -r #{pub}/build* #{pub}/app/* #{pub}/ext #{pub}/bootstrap.js"
-            file = "#{dest}/all-classes.js"
-            md5 = Digest::MD5.hexdigest(File.read(file))
-            dest = "#{shared_path}/assets/app-#{md5}.js"
-            run "ln -nfs #{deploy_to}/shared/extjs/resources #{release_path}/public/resources"
-            run "ln -nfs #{deploy_to}/shared/extjs/ext #{release_path}/public/ext"
-            run "mv #{shared_path}/extjs/all-classes.js #{dest}"
-            run "gzip -c #{dest} > #{dest}.gz"
-            run "echo 'app.js: app-#{md5}.js' >> #{shared_path}/assets/manifest.yml"
+            src  = './public/build/App/production'
+            dest = "#{deploy_to}/shared/extjs"
+            css = "#{src}/resources/App-all.css"
+            js  = "#{src}/all-classes.js"
+            output = `gzip -f #{css} && gzip -f #{js}`
+            raise Capistrano::Error, "gzip ExtJS assets failed:\n#{output}" if 0 != $?.exitstatus
+            top.upload "#{css}.gz", "#{dest}/app.css.gz", :via => :scp
+            top.upload "#{js}.gz",  "#{dest}/app.js.gz",  :via => :scp
+            %w{js css}.each{ |ext| run "gunzip -c #{dest}/app.#{ext}.gz > #{dest}/app.#{ext}" }
+            `rsync -avz -e ssh \"#{src}/resources/images\" \"#{user}@#{server}:#{dest}/\"`
+            run "ln -nfs #{dest} #{pub}/ext"
         end
     end
 
