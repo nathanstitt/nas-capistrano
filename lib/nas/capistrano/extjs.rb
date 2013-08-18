@@ -42,7 +42,7 @@ configuration.load do
                     logger.info "Finished ExtJS compilation (#{(Time.now-start).round(2)} seconds)"
                 end
             else
-                logger.info "Skipping ExtJS compilation because there were no changes in public/app. FORCE_UPLOAD=1 to force"
+                logger.info "Skipping ExtJS compilation because there were no changes in public/app. FORCE_EXT_UPLOAD=1 to force"
             end
         end
 
