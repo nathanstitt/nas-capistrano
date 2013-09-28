@@ -30,10 +30,10 @@ configuration.load do
 
             task :update do
                 from = source.next_revision(current_revision)
-                if ENV['FORCE_UPLOAD'] || capture("cd #{latest_release} && #{source.local.log(from)} vendor/assets/ lib/assets/ app/assets/ | wc -l").to_i > 0
+                if ENV['FORCE_ASSETS'] || capture("cd #{latest_release} && #{source.local.log(from)} vendor/assets/ lib/assets/ app/assets/ | wc -l").to_i > 0
                     deploy.assets.upload
                 else
-                    logger.info "Skipping asset precompilation because there were no asset changes. FORCE_UPLOAD=1 to force"
+                    logger.info "Skipping asset precompilation because there were no asset changes. FORCE_ASSETS=1 to force"
                 end
             end
 

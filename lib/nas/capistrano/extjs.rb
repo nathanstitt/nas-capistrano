@@ -10,7 +10,6 @@ Capistrano::Configuration.instance(:must_exist) :
 
 configuration.load do
 
-    after 'deploy:finalize_update', 'extjs:upload'
     before "deploy", "extjs:debugcheck"
 
     namespace :extjs do
@@ -24,34 +23,34 @@ configuration.load do
 
         desc "build extjs classes"
         task :build do
-            from = source.next_revision(current_revision)
-            if ENV['FORCE_EXT_UPLOAD'] || capture("cd #{latest_release} && #{source.local.log(from)} public/app/ | wc -l").to_i > 0
-                output = run_locally("rake build:coffee")
-                Dir.chdir( 'public' ) do
-                    start = Time.now
-                    logger.info "Starting ExtJS compilation"
-                    pid = Kernel.fork do
-                        %w{GEM_HOME GEM_PATH RUBYOPT}.each{ |var| ENV.delete(var) }
-                        output = `source $(rvm 1.9 do rvm env --path) && sencha app build`
-                        if output =~ /BUILD FAILED/ || 0 != $?.exitstatus
-                            raise Capistrano::Error, "Sencha compile failed:\n#{output}"
-                        end
+            output = run_locally("rake build:coffee")
+            Dir.chdir( 'public' ) do
+                start = Time.now
+                logger.info "Starting ExtJS compilation"
+                pid = Kernel.fork do
+                    %w{GEM_HOME GEM_PATH RUBYOPT}.each{ |var| ENV.delete(var) }
+                    output = `source $(rvm 1.9 do rvm env --path) && sencha app build`
+                    if output =~ /BUILD FAILED/ || 0 != $?.exitstatus
+                        raise Capistrano::Error, "Sencha compile failed:\n#{output}"
                     end
-                    Process.waitpid(pid)
-                    abort("ExtJS Build failure") if 0 != $?.exitstatus
-                    logger.info "Finished ExtJS compilation (#{(Time.now-start).round(2)} seconds)"
                 end
-            else
-                logger.info "Skipping ExtJS compilation because there were no changes in public/app. FORCE_EXT_UPLOAD=1 to force"
+                Process.waitpid(pid)
+                abort("ExtJS Build failure") if 0 != $?.exitstatus
+                logger.info "Finished ExtJS compilation (#{(Time.now-start).round(2)} seconds)"
             end
         end
 
-        before 'extjs:upload', 'extjs:build'
+
+        before 'extjs:link', 'extjs:upload'
         desc "upload extjs compiled & minimized source"
         task :upload do
+            from = source.next_revision(current_revision)
+            unless ENV['FORCE_EXTJS'] || capture("cd #{latest_release} && #{source.local.log(from)} public/app/ | wc -l").to_i > 0
+                logger.info "Skipping ExtJS compilation because there were no changes in public/app. FORCE_EXTJS=1 to force"
+                next
+            end
+            extjs.build
             server = configuration.variables[:server]
-            pub = "#{release_path}/public"
-            run "rm -r #{pub}/build* #{pub}/app/* #{pub}/ext #{pub}/bootstrap.js"
             src  = './public/build/App/production'
             dest = "#{deploy_to}/shared/extjs"
             css = "#{src}/resources/App-all.css"
@@ -62,7 +61,15 @@ configuration.load do
             top.upload "#{js}.gz",  "#{dest}/app.js.gz",  :via => :scp
             %w{js css}.each{ |ext| run "gunzip -c #{dest}/app.#{ext}.gz > #{dest}/app.#{ext}" }
             `rsync -avz -e ssh \"#{src}/resources/images\" \"#{user}@#{server}:#{dest}/\"`
-            run "ln -nfs #{dest} #{pub}/ext"
+        end
+
+
+        after 'deploy:finalize_update', 'extjs:link'
+        desc "Link shared extjs directory into public"
+        task :link do
+            pub = "#{release_path}/public"
+            run "rm -r #{pub}/build* #{pub}/app/* #{pub}/ext #{pub}/bootstrap.js"
+            run "ln -nfs #{deploy_to}/shared/extjs #{pub}/ext"
         end
     end
 
