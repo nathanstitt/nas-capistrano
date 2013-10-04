@@ -51,13 +51,13 @@ configuration.load do
             end
             extjs.build
             server = configuration.variables[:server]
-            src  = './public/build/App/production'
+            src  = './public/build/production/App'
             dest = "#{deploy_to}/shared/extjs"
-            css = "#{src}/resources/App-all.css"
-            js  = "#{src}/all-classes.js"
-            output = `gzip -f #{css} && gzip -f #{js}`
+            css = "#{src}/resources/App-all.css.gz"
+            js  = "#{src}/app.js"
+            output = `gzip -f #{js}`
             raise Capistrano::Error, "gzip ExtJS assets failed:\n#{output}" if 0 != $?.exitstatus
-            top.upload "#{css}.gz", "#{dest}/app.css.gz", :via => :scp
+            top.upload "#{css}", "#{dest}/app.css.gz", :via => :scp
             top.upload "#{js}.gz",  "#{dest}/app.js.gz",  :via => :scp
             %w{js css}.each{ |ext| run "gunzip -c #{dest}/app.#{ext}.gz > #{dest}/app.#{ext}" }
             `rsync -avz -e ssh \"#{src}/resources/images\" \"#{user}@#{server}:#{dest}/\"`
