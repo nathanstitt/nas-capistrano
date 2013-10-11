@@ -1,7 +1,7 @@
 require 'nas/capistrano/common'
 
 before "deploy:starting", "nas:assets:debugcheck"
-after  "deploy:updated",  "nas:assets:update"
+after  "deploy:updated",  "nas:assets:check"
 
 set :bundle_without,  [:development, :test, :assets]
 
@@ -24,17 +24,17 @@ namespace :nas do
             # NOOP to over-ride built in cap task
         end
 
-        task :update do
+        task :check do
             on roles(:web) do
-                if ENV['FORCE_ASSETS'] || change_count_for_paths( 'app/assets' ) > 0
-                    invoke 'deploy:assets:upload'
-                else
+                if ENV['FORCE_ASSETS'].nil? && change_count_for_paths( 'app/assets' ).zero?
                     info "Skipping asset precompilation because there were no asset changes. FORCE_ASSETS=1 to force"
+                else
+                    Rake::Task["nas:assets:update"].invoke
                 end
             end
         end
 
-        task :upload do
+        task :update do
             on roles(:web) do
                 run_locally("rake assets:clean && rake assets:precompile")
                 run_locally "cd public && tar -jcf assets.tar.bz2 assets"

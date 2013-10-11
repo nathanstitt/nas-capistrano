@@ -5,7 +5,7 @@ module NAS
     module Capistrano
 
         def last_release_time
-            @last_release_time ||= capture( "ls -l --full-time #{releases_path} | awk '{print $6, $7}'|tail -1" )
+            @last_release_time ||= capture( "ls -l --full-time #{releases_path} | tail -2 | head -1 | awk '{print $6, $7}'" )
         end
 
         def dry_run?

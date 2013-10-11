@@ -1,7 +1,7 @@
 require 'nas/capistrano/common'
 
 before "deploy:starting",  "nas:extjs:debugcheck"
-before "deploy:updated",   "nas:extjs:upload"
+before "deploy:updated",   "nas:extjs:check"
 after  "deploy:symlink:release", "nas:extjs:link"
 
 namespace :nas do
@@ -37,14 +37,18 @@ namespace :nas do
         end
 
         desc "upload extjs compiled & minimized source"
-        task :upload do
+        task :check do
             on roles(:web) do | host |
-                unless ENV['FORCE_EXTJS'] || change_count_for_paths( 'public/app' ) > 0
+                if ENV['FORCE_EXTJS'].nil? && change_count_for_paths( 'public/app' ).zero?
                     info "Skipping ExtJS compilation because there were no changes in public/app. FORCE_EXTJS=1 to force"
-                    next
+                else
+                    Rake::Task["nas:extjs:update"].invoke
                 end
-                invoke 'extjs:build'
+            end
+        end
 
+        task :update => :build do
+            on roles(:web) do | host |
                 src  = './public/build/production/App'
                 dest = "#{deploy_to}/shared/extjs"
                 [ "#{src}/resources/App-all.css", "#{src}/app.js" ].each do | file |
