@@ -78,7 +78,7 @@ desc "tail production log files"
 task :logtail do
     on roles(:app) do
         trap("INT") { puts 'Interupted'; exit 0; }
-        run "tail -n200 -f #{shared_path}/log/production.log" do |channel, stream, data|
+        execute "tail -n200 -f #{shared_path}/log/production.log" do |channel, stream, data|
             puts  # for an extra line break before the host name
             puts "#{channel[:host]}: #{data}"
             break if stream == :err
