@@ -26,7 +26,7 @@ module NAS
 
         def change_count_for_paths( *paths )
             last = last_release.gsub(/^(\d{4})(\d{2})(\d{2})(\d{2})(\d{2})*/,'\1-\2-\3 \4:\5')
-            capture( "cd #{repo_path} git shortlog -s --after='#{last}' -- #{paths.join(' ')}| awk '{ sum+=$1} END {print sum}'" ).to_i
+            capture( "cd #{repo_path} && git shortlog -s --after='#{last}' -- #{paths.join(' ')}| awk '{ sum+=$1} END {print sum}'" ).to_i
         end
 
     end
