@@ -4,8 +4,8 @@ module NAS
 
     module Capistrano
 
-        def last_release
-            @last_release ||= capture(:ls, releases_path, '| tail -1')
+        def last_release_time
+            @last_release_time ||= capture( "ls -l --full-time #{releases_path} | awk '{print $6, $7}'|tail -1" )
         end
 
         def dry_run?
@@ -25,8 +25,7 @@ module NAS
         end
 
         def change_count_for_paths( *paths )
-            last = last_release.gsub(/^(\d{4})(\d{2})(\d{2})(\d{2})(\d{2})*/,'\1-\2-\3 \4:\5')
-            capture( "cd #{repo_path} && git shortlog -s --after='#{last}' -- #{paths.join(' ')}| awk '{ sum+=$1} END {print sum}'" ).to_i
+            capture( "cd #{repo_path} && git shortlog -s --after='#{last_release_time}' -- #{paths.join(' ')}| awk '{ sum+=$1} END {print sum}'" ).to_i
         end
 
     end
