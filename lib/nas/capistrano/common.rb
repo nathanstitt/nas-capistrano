@@ -1,4 +1,5 @@
 require "nas/capistrano"
+require "capistrano/rails/migrations"
 
 set :user, "nas"
 set :use_sudo, false
