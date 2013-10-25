@@ -65,7 +65,7 @@ namespace :nas do
         task :link do
             on roles(:web) do
                 pub = "#{release_path}/public"
-                execute "rm -r #{pub}/build* #{pub}/app/* #{pub}/ext #{pub}/bootstrap.js"
+                execute "rm -r #{pub}/build* #{pub}/app/* #{pub}/ext"
                 execute "ln -nfs #{deploy_to}/shared/extjs #{pub}/ext"
             end
         end
