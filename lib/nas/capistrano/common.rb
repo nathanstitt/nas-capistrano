@@ -1,5 +1,4 @@
 require "nas/capistrano"
-require "capistrano/rails/migrations"
 
 set :user, "nas"
 set :use_sudo, false
@@ -43,6 +42,19 @@ namespace :deploy do
         end
     end
 
+end
+
+namespace :db do
+    task :migrate do
+        on roles(:db) do
+            within release_path do
+                with rails_env: fetch(:stage) do
+                    execute :rake, "db:migrate"
+                    Rake::Task['deploy:restart'].invoke
+                end
+            end
+        end
+    end
 end
 
 namespace :nas do
