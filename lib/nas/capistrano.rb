@@ -25,8 +25,8 @@ module NAS
         end
 
         def change_count_for_paths( *paths )
-            with fetch(:git_environmental_variables) do
-                capture(:git,"--bare",:log,"--format=oneline","--after='#{last_release_time}'",
+            within repo_path do
+                return capture(:git,"--bare",:log,"--format=oneline","--after='#{last_release_time}'",
                     "-- #{paths.join(' ')}","|wc -l").to_i
             end
         end
