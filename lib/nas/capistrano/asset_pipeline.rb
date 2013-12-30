@@ -36,6 +36,7 @@ namespace :nas do
 
         task :update do
             on roles(:web) do
+                FileUtils.rm_rf("public/assets")
                 run_locally("rake assets:clean && rake assets:precompile")
                 run_locally "cd public && tar -jcf assets.tar.bz2 assets"
                 upload! "public/assets.tar.bz2", "#{shared_path}"
