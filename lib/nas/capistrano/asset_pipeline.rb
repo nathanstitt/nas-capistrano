@@ -41,6 +41,7 @@ namespace :nas do
                 run_locally "cd public && tar -jcf assets.tar.bz2 assets"
                 upload! "public/assets.tar.bz2", "#{shared_path}"
                 execute "find #{shared_path}/assets -type f -mtime +30 -print0 | xargs -0 --no-run-if-empty rm"
+                execute "find #{shared_path}/assets -type f -name 'manifest*' -exec rm {} \\;"
                 execute "cd #{shared_path} && tar -jxf assets.tar.bz2 && rm assets.tar.bz2"
                 run_locally "rm public/assets.tar.bz2"
                 run_locally("rake assets:clean")
