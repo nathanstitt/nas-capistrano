@@ -24,7 +24,7 @@ namespace :nas do
                     info "Starting ExtJS compilation"
                     pid = Kernel.fork do
                         %w{GEM_HOME GEM_PATH RUBYOPT}.each{ |var| ENV.delete(var) }
-                        output = `source $(rvm 1.9 do rvm env --path) && sencha app build`
+                        output = `source $(rvm 2.1 do rvm env --path) && sencha app build`
                         if output =~ /BUILD FAILED/ || 0 != $?.exitstatus
                             fail "Sencha compile failed:\n#{output}"
                         end
